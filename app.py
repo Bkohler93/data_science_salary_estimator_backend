@@ -8,16 +8,18 @@ import pickle
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sqlalchemy import create_engine, text, select, MetaData, Table, func
-from config import DB_DRIVER, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+from config import DB_ENGINE, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME, DATASET_PATH, MODEL_PATH
 import decimal, datetime
 import json
 import urllib.parse
 
 # load dataset for frontend to retrieve
-df = pd.read_csv("/home/brettkohler93/mysite/processed_dataset.csv")
+salary_csv_path = DATASET_PATH
+df = pd.read_csv(salary_csv_path)
 
 # load model
-model = pickle.load(open("/home/brettkohler93/mysite/linear_regression_model.sav", "rb"))
+lr_model_path = MODEL_PATH
+model = pickle.load(open(lr_model_path, "rb"))
 
 # initializer encoder for categorical features in model
 ohe = OneHotEncoder(drop='first')
@@ -31,17 +33,20 @@ X = df.drop(columns=['salary'])
 ct.fit_transform(X)
 
 # initialize db connection
-db_driver = DB_DRIVER
-db_uname = DB_USERNAME
-db_pw = DB_PASSWORD
-db_host = DB_HOST
-db_port = DB_PORT
-db_name = DB_NAME
+db_config = {
+	'engine': DB_ENGINE,
+	'username': DB_USERNAME,
+	'password': DB_PASSWORD,
+	'host': DB_HOST,
+	'port': DB_PORT,
+	'database': DB_NAME,
+}
 
 # construct database config string
-# 'mysql+pymysql://brettkohler93:mysqlpassword@brettkohler93.mysql.pythonanywhere-services.com/brettkohler93$data_science_salaries'
-db_config = f"{db_driver}://{db_uname}:{db_pw}@{db_host}{db_port}/{db_name}"
-engine = create_engine(db_config, pool_recycle=280)
+# 'mysql+pymysql://PASSWORD:PASSWORD@HOST:PORT$DATABASE'
+
+db_config_str = f"{db_config['engine']}://{db_config['username']}:{db_config['password']}@{db_config['host']}{db_config['port']}/{db_config['database']}"
+engine = create_engine(db_config_str, pool_recycle=280)
 
 with engine.connect() as conn:
     tableList = conn.execute(text("SELECT 1 FROM information_schema.tables WHERE table_name = 'salaries';")).fetchall();
@@ -59,6 +64,10 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+if __name__ == '__main__':
+    # Set the default port to 5000
+    default_port = 5000
+    app.run(port=default_port)
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
