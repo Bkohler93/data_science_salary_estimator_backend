@@ -8,7 +8,7 @@ import pickle
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sqlalchemy import create_engine, text, select, MetaData, Table, func
-from config import DB_ENGINE, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME, DATASET_PATH, MODEL_PATH
+from config import DB_DRIVER, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME, DATASET_PATH, MODEL_PATH
 import decimal, datetime
 import json
 import urllib.parse
@@ -34,7 +34,7 @@ ct.fit_transform(X)
 
 # initialize db connection
 db_config = {
-	'engine': DB_ENGINE,
+	'engine': DB_DRIVER,
 	'username': DB_USERNAME,
 	'password': DB_PASSWORD,
 	'host': DB_HOST,
@@ -64,10 +64,10 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-if __name__ == '__main__':
-    # Set the default port to 5000
-    default_port = 5000
-    app.run(port=default_port)
+# if __name__ == '__main__':
+#     # Set the default port to 5000
+#     default_port = 5000
+#     app.run(port=default_port)
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
