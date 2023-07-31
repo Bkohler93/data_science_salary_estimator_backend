@@ -8,8 +8,9 @@ class SalaryBLL:
         self.model = PredictionModel()
         self.salary_repository = SalaryRepository()
 
-    def get_attribute_names(self):
-        attribute_names = self.salary_repository.get_unique_column_names()
+    def get_attribute_names(self, column_name):
+        attribute_names = self.salary_repository.get_unique_column_values(
+            column_name)
         return attribute_names
 
     def get_avg_salary_data(self, job_title, attribute_name):
