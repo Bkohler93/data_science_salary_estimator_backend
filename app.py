@@ -1,22 +1,6 @@
-
-# This creates the model to predict Data Science Salaries and allows a frontend
-# application to retrieve results from the model as well as the raw data
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-import pandas as pd
-import decimal
-import datetime
-import json
-import urllib.parse
-
-from prediction_model import PredictionModel
-from salary_repository import SalaryRepository
-
-# initialize the linear regression model to predict salaries
-model = PredictionModel()
-
-# initialize repository to query database
-salary_repository = SalaryRepository()
+from business_logic import SalaryBLL
 
 app = Flask(__name__)
 
@@ -24,13 +8,7 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-
-def alchemyencoder(obj):
-    """JSON encoder function for SQLAlchemy special classes."""
-    if isinstance(obj, datetime.date):
-        return obj.isoformat()
-    elif isinstance(obj, decimal.Decimal):
-        return float(obj)
+salary_bll = SalaryBLL()
 
 
 @app.route('/')
@@ -41,70 +19,32 @@ def hello_world():
 
 @app.route('/attribute_names', methods=["GET"])
 def send_attribute_names():
-    attribute_names = salary_repository.get_unique_column_names()
-    return json.dumps(attribute_names)
+    attribute_names = salary_bll.get_attribute_names()
+    return jsonify(attribute_names)
 
 
 @app.route('/avg_salary_data', methods=["GET"])
 def send_avg_salary_data():
-    job_title = urllib.parse.unquote(request.args.get('job_title', ''))
-    attribute_name = urllib.parse.unquote(request.args.get('field', ''))
-    result = salary_repository._get_avg_salary_for_job_col(
-        job_title, attribute_name)
-    return json.dumps([r._asdict() for r in result], default=alchemyencoder)
-
-# example URL /predict?experience_level=High&employment_type=Full-Time&job_title=Data-Scientist&
-#               company_location=Australia&employee_residence=Australia&company_size=Medium&
-#               work_year=2022
+    job_title = request.args.get('job_title', '')
+    attribute_name = request.args.get('field', '')
+    result = salary_bll.get_avg_salary_data(job_title, attribute_name)
+    return jsonify(result)
 
 
 @app.route('/predict', methods=["GET"])
 def predict_salary():
+    experience_level = request.args.get('experience_level', '')
+    employment_type = request.args.get('employment_type', '')
+    job_title = request.args.get('job_title', '')
+    company_location = request.args.get('company_location', '')
+    employee_residence = request.args.get('employee_residence', '')
+    company_size = request.args.get('company_size', '')
+    work_year = request.args.get('work_year', '')
 
-    experience_level = urllib.parse.unquote(
-        request.args.get('experience_level', ''))
-    employment_type = urllib.parse.unquote(
-        request.args.get('employment_type', ''))
-    job_title = urllib.parse.unquote(request.args.get('job_title', ''))
-    company_location = urllib.parse.unquote(
-        request.args.get('company_location', ''))
-    employee_residence = urllib.parse.unquote(
-        request.args.get('employee_residence', ''))
-    company_size = urllib.parse.unquote(request.args.get('company_size', ''))
-    work_year = urllib.parse.unquote(request.args.get('work_year', ''))
-
-    if check_parameters(experience_level, employment_type, job_title, company_location,
-                        employee_residence, company_size, work_year):
-        return jsonify({
-            'error': 'You are missing some parameters.',
-        })
-
-    predict_data = pd.DataFrame({
-        'year': [work_year],
-        'experience_level': [experience_level],
-        'employment_type': [employment_type],
-        'job_title': [job_title],
-        'employee_residence': [employee_residence],
-        'company_location': [company_location],
-        'company_size': [company_size],
-    })
-
-    try:
-        result = model.predict(predict_data)
-        res = {
-            'result': result
-        }
-    except:
-        return jsonify({
-            'error': 'Invalid prediction. Something went wrong in the server.',
-            'result': predict_data.to_string()
-        })
-
-    return jsonify(res)
+    result = salary_bll.predict_salary(experience_level, employment_type, job_title, company_location,
+                                       employee_residence, company_size, work_year)
+    return jsonify(result)
 
 
-def check_parameters(*args):
-    if any(arg is None for arg in args):
-        return True
-    else:
-        return False
+if __name__ == "__main__":
+    app.run(debug=True)
