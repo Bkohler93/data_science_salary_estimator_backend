@@ -19,8 +19,11 @@ def hello_world():
 
 @app.route('/attribute_names', methods=["GET"])
 def send_attribute_names():
-    column_name = request.args.get('column_name', '')
-    attribute_names = salary_bll.get_attribute_names(column_name)
+    column_name = request.args.get('column_name', None)
+    if column_name is None:
+        attribute_names = salary_bll.get_attribute_names_old()
+    else:
+        attribute_names = salary_bll.get_attribute_names(column_name)
     return jsonify(attribute_names)
 
 

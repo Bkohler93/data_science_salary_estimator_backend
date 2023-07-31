@@ -13,6 +13,10 @@ class SalaryBLL:
             column_name)
         return attribute_names
 
+    def get_attribute_names_old(self):
+        attribute_names = self.salary_repository.get_unique_column_values_old()
+        return attribute_names
+
     def get_avg_salary_data(self, job_title, attribute_name):
         result = self.salary_repository._get_avg_salary_for_job_col(
             job_title, attribute_name)

@@ -49,6 +49,30 @@ class SalaryRepository:
 
         return stmt.all()
 
+    def get_unique_column_values_old(self):
+        comp_size_res = self._execute_unique_column_values_query(
+            Salary.company_size
+        )
+        comp_loc_res = self._execute_unique_column_values_query(
+            Salary.company_location)
+        emp_residence_res = self._execute_unique_column_values_query(
+            Salary.employee_residence)
+        job_title_res = self._execute_unique_column_values_query(
+            Salary.job_title)
+        emp_type_res = self._execute_unique_column_values_query(
+            Salary.employment_type)
+        exp_lvl_res = self._execute_unique_column_values_query(
+            Salary.experience_level)
+
+        return {
+            'experience_level': [d._asdict()['experience_level'] for d in exp_lvl_res],
+            'employment_type': [d._asdict()['employment_type'] for d in emp_type_res],
+            'job_title': [d._asdict()['job_title'] for d in job_title_res],
+            'employee_residence': [d._asdict()['employee_residence'] for d in emp_residence_res],
+            'company_location': [d._asdict()['company_location'] for d in comp_loc_res],
+            'company_size': [d._asdict()['company_size'] for d in comp_size_res],
+        }
+
     def get_unique_column_values(self, column_name):
 
         res = self._execute_unique_column_values_query(
